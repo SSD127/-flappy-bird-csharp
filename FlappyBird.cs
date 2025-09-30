@@ -277,13 +277,23 @@ namespace FlappyBird
         public float TopHeight { get; set; }
         public float BottomY { get; set; }
         public int Width { get; set; } = 70;
-        public int Gap { get; set; } = 160;
+        private int gap = 160;
+        public int Gap
+        {
+            get => gap;
+            set
+            {
+                gap = value;
+                BottomY = TopHeight + gap;
+            }
+        }
         public bool Scored { get; set; } = false;
         public float Speed { get; set; } = 3f;
 
-        public Pipe(float x, int windowHeight, Random random)
+        public Pipe(float x, int windowHeight, Random random, int gap)
         {
             X = x;
+            Gap = gap;
             TopHeight = random.Next(120, Math.Max(121, windowHeight - Gap - 120));
             BottomY = TopHeight + Gap;
         }
@@ -375,9 +385,7 @@ namespace FlappyBird
             pipes.Clear();
             for (int i = 0; i < 4; i++)
             {
-                Pipe p = new Pipe(windowWidth + (i * pipeSpacing), windowHeight, random);
-                p.Gap = settings.PipeGap;
-                pipes.Add(p);
+                pipes.Add(new Pipe(windowWidth + (i * pipeSpacing), windowHeight, random, settings.PipeGap));
             }
         }
 
@@ -403,9 +411,7 @@ namespace FlappyBird
             // Yeni borular ekle
             if (pipes.Count == 0 || pipes.Last().X < windowWidth - pipeSpacing)
             {
-                Pipe p = new Pipe(windowWidth + 50, windowHeight, random);
-                p.Gap = settings.PipeGap;
-                pipes.Add(p);
+                pipes.Add(new Pipe(windowWidth + 50, windowHeight, random, settings.PipeGap));
             }
         }
 
