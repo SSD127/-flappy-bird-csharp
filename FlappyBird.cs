@@ -532,10 +532,12 @@ namespace FlappyBird
             this.BackColor = Color.SkyBlue;
             this.KeyPreview = true;
             this.DoubleBuffered = true;
+            this.SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.DoubleBuffer, true);
             this.KeyDown += FlappyBirdGame_KeyDown;
             this.Paint += FlappyBirdGame_Paint;
             this.Resize += FlappyBirdGame_Resize;
             this.MouseDown += FlappyBirdGame_MouseDown;
+            this.Load += FlappyBirdGame_Load;
             
             // Fontları başlat
             titleFont = new Font("Arial", 36, FontStyle.Bold);
@@ -551,6 +553,8 @@ namespace FlappyBird
             gameTimer = new Timer();
             gameTimer.Interval = 16; // 60 FPS
             gameTimer.Tick += GameTimer_Tick;
+            // Menü, pause ve game over ekranlarında da yeniden çizim/animasyon için timer hep çalışsın
+            gameTimer.Start();
         }
 
         private void GameTimer_Tick(object sender, EventArgs e)
@@ -566,7 +570,6 @@ namespace FlappyBird
                     if (pipeManager.CheckCollision(bird) || bird.Y < 0 || bird.Y > this.ClientSize.Height - 80)
                     {
                         gameState = GameState.GameOver;
-                        gameTimer.Stop();
                         PlayHit();
                         StartScreenShake();
                         SpawnParticles(bird);
@@ -612,115 +615,8 @@ namespace FlappyBird
         private bool isJumpHeld = false;
         private void FlappyBirdGame_KeyDown(object sender, KeyEventArgs e)
         {
-            switch (gameState)
-            {
-                case GameState.MainMenu:
-                    if (e.KeyCode == Keys.Enter)
-                    {
-                        gameState = GameState.DifficultySelection;
-                    }
-                    break;
-                    
-                case GameState.DifficultySelection:
-                    if (e.KeyCode == Keys.D1)
-                    {
-                        selectedDifficulty = Difficulty.Easy;
-                        gameState = GameState.CostumeSelection;
-                    }
-                    else if (e.KeyCode == Keys.D2)
-                    {
-                        selectedDifficulty = Difficulty.Normal;
-                        gameState = GameState.CostumeSelection;
-                    }
-                    else if (e.KeyCode == Keys.D3)
-                    {
-                        selectedDifficulty = Difficulty.Hard;
-                        gameState = GameState.CostumeSelection;
-                    }
-                    else if (e.KeyCode == Keys.Escape)
-                    {
-                        gameState = GameState.MainMenu;
-                    }
-                    break;
-                    
-                case GameState.CostumeSelection:
-                    switch (e.KeyCode)
-                    {
-                        case Keys.D1:
-                            selectedCostume = BirdCostume.Classic;
-                            StartGame();
-                            break;
-                        case Keys.D2:
-                            selectedCostume = BirdCostume.Red;
-                            StartGame();
-                            break;
-                        case Keys.D3:
-                            selectedCostume = BirdCostume.Blue;
-                            StartGame();
-                            break;
-                        case Keys.D4:
-                            selectedCostume = BirdCostume.Rainbow;
-                            StartGame();
-                            break;
-                        case Keys.D5:
-                            selectedCostume = BirdCostume.Golden;
-                            StartGame();
-                            break;
-                        case Keys.D6:
-                            selectedCostume = BirdCostume.Green;
-                            StartGame();
-                            break;
-                        case Keys.D7:
-                            selectedCostume = BirdCostume.Purple;
-                            StartGame();
-                            break;
-                        case Keys.Escape:
-                            gameState = GameState.MainMenu;
-                            break;
-                    }
-                    break;
-                    
-                case GameState.Playing:
-                    if (e.KeyCode == Keys.Space)
-                    {
-                        bird.Jump();
-                        isJumpHeld = true;
-                        PlayJump();
-                    }
-                    else if (e.KeyCode == Keys.Escape)
-                    {
-                        gameState = GameState.Paused;
-                        gameTimer.Stop();
-                    }
-                    break;
-                    
-                case GameState.GameOver:
-                    if (e.KeyCode == Keys.Space || e.KeyCode == Keys.Enter)
-                    {
-                        RestartGame();
-                    }
-                    else if (e.KeyCode == Keys.Escape)
-                    {
-                        gameState = GameState.MainMenu;
-                    }
-                    break;
-                    
-                case GameState.Paused:
-                    if (e.KeyCode == Keys.Escape)
-                    {
-                        gameState = GameState.Playing;
-                        gameTimer.Start();
-                    }
-                    else if (e.KeyCode == Keys.R)
-                    {
-                        RestartGame();
-                    }
-                    else if (e.KeyCode == Keys.M)
-                    {
-                        gameState = GameState.MainMenu;
-                    }
-                    break;
-            }
+            // KeyDown olayını da HandleKeyPress'e yönlendir
+            HandleKeyPress(e.KeyCode);
         }
 
         protected override void OnKeyUp(KeyEventArgs e)
@@ -1259,6 +1155,123 @@ namespace FlappyBird
             topScores.Add(newScore);
             topScores = topScores.OrderByDescending(x => x).Take(5).ToList();
             SaveTopScores();
+        }
+
+        private void FlappyBirdGame_Load(object sender, EventArgs e)
+        {
+            // Basit focus
+            this.Focus();
+        }
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            // Tüm tuşları yakala ve işle
+            HandleKeyPress(keyData);
+            return true; // Her zaman true döndür
+        }
+        
+        private void HandleKeyPress(Keys keyData)
+        {
+            switch (keyData)
+            {
+                case Keys.Space:
+                case Keys.W:
+                case Keys.Up:
+                    if (gameState == GameState.Playing)
+                    {
+                        bird.Jump();
+                        isJumpHeld = true;
+                        PlayJump();
+                    }
+                    else if (gameState == GameState.GameOver)
+                    {
+                        RestartGame();
+                    }
+                    else if (gameState == GameState.MainMenu)
+                    {
+                        gameState = GameState.DifficultySelection;
+                    }
+                    break;
+                case Keys.Enter:
+                    if (gameState == GameState.MainMenu)
+                    {
+                        gameState = GameState.DifficultySelection;
+                    }
+                    else if (gameState == GameState.GameOver)
+                    {
+                        RestartGame();
+                    }
+                    break;
+                case Keys.Escape:
+                    if (gameState == GameState.Playing)
+                    {
+                        gameState = GameState.Paused;
+                        gameTimer.Stop();
+                    }
+                    else if (gameState == GameState.Paused)
+                    {
+                        gameState = GameState.Playing;
+                        gameTimer.Start();
+                    }
+                    else if (gameState == GameState.GameOver)
+                    {
+                        gameState = GameState.MainMenu;
+                    }
+                    else if (gameState == GameState.DifficultySelection || gameState == GameState.CostumeSelection)
+                    {
+                        gameState = GameState.MainMenu;
+                    }
+                    break;
+                case Keys.D1:
+                case Keys.NumPad1:
+                case Keys.D2:
+                case Keys.NumPad2:
+                case Keys.D3:
+                case Keys.NumPad3:
+                case Keys.D4:
+                case Keys.NumPad4:
+                case Keys.D5:
+                case Keys.NumPad5:
+                case Keys.D6:
+                case Keys.NumPad6:
+                case Keys.D7:
+                case Keys.NumPad7:
+                    if (gameState == GameState.DifficultySelection)
+                    {
+                        int diff = (int)keyData - (int)Keys.D1;
+                        if (keyData >= Keys.NumPad1 && keyData <= Keys.NumPad7)
+                        {
+                            diff = (int)keyData - (int)Keys.NumPad1;
+                        }
+                        if (diff == 0) selectedDifficulty = Difficulty.Easy;
+                        else if (diff == 1) selectedDifficulty = Difficulty.Normal;
+                        else if (diff == 2) selectedDifficulty = Difficulty.Hard;
+                        gameState = GameState.CostumeSelection;
+                    }
+                    else if (gameState == GameState.CostumeSelection)
+                    {
+                        int costume = (int)keyData - (int)Keys.D1;
+                        if (keyData >= Keys.NumPad1 && keyData <= Keys.NumPad7)
+                        {
+                            costume = (int)keyData - (int)Keys.NumPad1;
+                        }
+                        selectedCostume = (BirdCostume)costume;
+                        StartGame();
+                    }
+                    break;
+                case Keys.R:
+                    if (gameState == GameState.Paused)
+                    {
+                        RestartGame();
+                    }
+                    break;
+                case Keys.M:
+                    if (gameState == GameState.Paused)
+                    {
+                        gameState = GameState.MainMenu;
+                    }
+                    break;
+            }
         }
     }
 }

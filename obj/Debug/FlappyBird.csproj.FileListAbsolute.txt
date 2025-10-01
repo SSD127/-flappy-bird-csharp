@@ -1,0 +1,6 @@
+C:\Users\salih sirri\Desktop\flapy bird\obj\Debug\FlappyBird.csproj.AssemblyReference.cache
+C:\Users\salih sirri\Desktop\flapy bird\obj\Debug\FlappyBird.csproj.CoreCompileInputs.cache
+C:\Users\salih sirri\Desktop\flapy bird\bin\Debug\FlappyBird.exe
+C:\Users\salih sirri\Desktop\flapy bird\bin\Debug\FlappyBird.pdb
+C:\Users\salih sirri\Desktop\flapy bird\obj\Debug\FlappyBird.exe
+C:\Users\salih sirri\Desktop\flapy bird\obj\Debug\FlappyBird.pdb
